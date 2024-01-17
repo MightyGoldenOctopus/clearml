@@ -2223,7 +2223,9 @@ class Task(_Task):
             wait_on_upload=False,  # type: bool
             extension_name=None,  # type: Optional[str]
             serialization_function=None,  # type: Optional[Callable[[Any], Union[bytes, bytearray]]]
-            retries=0  # type: int
+            compression=None,  # type: Optional[str]
+            compression_threshold=None,  # type: Optional[int]
+            retries=0,  # type: int
     ):
         # type: (...) -> bool
         """
@@ -2281,6 +2283,19 @@ class Task(_Task):
 
         :param int retries: Number of retries before failing to upload artifact. If 0, the upload is not retried
 
+        :param str compression: Compression algorithm (`zipfile.ZIP_STORED`, `zipfile.ZIP_DEFLATED`, `zipfile.BZIP2`
+            `zipfile.LZMA) to use when uploading the artifact. If None, no compression.
+
+        :param int compression_threshold: Minimum size in bytes of the artifact to compress. If None, the default
+            threshold (16 MB) is used. Parts of the artifacts that are less heavy than this threshold will not be
+            compressed. Ignored if `compression` is None.
+
+        :param int compression_chunk_size: Chunk size in bytes to use when compressing the artifact. If None, the
+            default chunk size (512 MB) is used. Ignored if `compression` is None.
+
+        :param int compression_max_workers: Maximum number of threads to use when compressing the artifact. If None,
+            the number of available CPU threads is used. Ignored if `compression` is None.
+
         :return: The status of the upload.
 
             - ``True`` - Upload succeeded.
@@ -2302,6 +2317,8 @@ class Task(_Task):
                     wait_on_upload=wait_on_upload,
                     extension_name=extension_name,
                     serialization_function=serialization_function,
+                    compression=compression,
+                    compression_threshold=compression_threshold,
                 ):
                     return True
             except Exception as e:
