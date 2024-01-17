@@ -777,9 +777,6 @@ class Artifacts(object):
                     local_filename.as_posix()))
                 return False
 
-            file_hash, _ = sha256sum(local_filename.as_posix(), block_size=Artifacts._hash_block_size)
-            file_size = local_filename.stat().st_size
-
             if compression and os.path.getsize(local_filename.as_posix()) // 1e6 > (compression_threshold or 0):
                 original_filename = local_filename.as_posix()
                 local_filename = Path(f'{local_filename}._compressed').as_posix().absolute()
@@ -798,6 +795,9 @@ class Artifacts(object):
                         'Failed compressing artifact {}\nContinuing without compression'
                         .format(original_filename, e))
                     pass
+
+            file_hash, _ = sha256sum(local_filename.as_posix(), block_size=Artifacts._hash_block_size)
+            file_size = local_filename.stat().st_size
 
             uri = self._upload_local_file(local_filename, name,
                                           delete_after_upload=delete_after_upload,
