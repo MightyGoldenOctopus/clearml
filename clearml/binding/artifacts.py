@@ -777,8 +777,9 @@ class Artifacts(object):
                     local_filename.as_posix()))
                 return False
 
-        if compression and os.path.getsize(local_filename.as_posix()) // 1e6 > (compression_threshold or 0):
-            original_filename = local_filename.as_posix()
+        compression_original_filename = None
+        if compression is not None and os.path.getsize(local_filename.as_posix()) // 1e6 > (compression_threshold or 0):
+            compression_original_filename = local_filename.as_posix()
             local_filename = Path(f'{local_filename}._compressed').as_posix().absolute()
             try:
                 with ZipFile(
@@ -788,13 +789,13 @@ class Artifacts(object):
                         compression=int(compression)
                 ) as zf:
                     zf.write(local_filename.as_posix(), arcname=local_filename.name)
-                if delete_after_upload:
-                    os.remove(original_filename)
             except Exception as e:
                 LoggerRoot.get_base_logger().warning(
                     'Failed compressing artifact {}\nContinuing without compression'
-                    .format(original_filename, e))
+                    .format(compression_original_filename, e))
                 pass
+        if compression_original_filename is not None and delete_after_upload:
+            os.remove(compression_original_filename)
 
             file_hash, _ = sha256sum(local_filename.as_posix(), block_size=Artifacts._hash_block_size)
             file_size = local_filename.stat().st_size
